@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preinscripción de Asignaturas</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     body {
       font-family: 'Poppins', Arial, sans-serif;
@@ -66,6 +67,8 @@
 <body>
   <h1>Preinscripción de Asignaturas</h1>
   <form id="inscripcionForm">
+    <!-- Campo oculto para validar el origen -->
+    <input type="hidden" name="origin" value="TU_VALOR_SECRETO">
     
     <label for="programa">Programa Académico:</label>
     <select id="programa" name="programa" required onchange="actualizarSemestres()">
@@ -91,6 +94,9 @@
     <select id="asignatura" name="asignatura" required>
       <option value="">Cargando asignaturas...</option>
     </select>
+
+    <!-- Google reCAPTCHA -->
+    <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
 
     <button type="submit">Preinscribir</button>
     <p class="error" id="errorMensaje">Error al enviar los datos. Intente de nuevo.</p>
@@ -148,8 +154,25 @@
       event.preventDefault();
       const errorMensaje = document.getElementById('errorMensaje');
       errorMensaje.style.display = 'none';
-      
+
+      // Deshabilitar el botón de envío
+      const submitButton = document.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Enviando...';
+
+      // Validar reCAPTCHA
+      const recaptchaResponse = grecaptcha.getResponse();
+      if (!recaptchaResponse) {
+        errorMensaje.textContent = 'Por favor, completa el reCAPTCHA.';
+        errorMensaje.style.display = 'block';
+        submitButton.disabled = false;
+        submitButton.textContent = 'Preinscribir';
+        return;
+      }
+
+      // Enviar datos al servidor
       const formData = new FormData(this);
+      formData.append('recaptcha', recaptchaResponse); // Agregar reCAPTCHA al formulario
       const params = new URLSearchParams(formData).toString();
 
       fetch(`${scriptURL}?action=inscribir`, {
@@ -161,12 +184,17 @@
       .then(result => {
         alert('La preinscripción de su asignatura fue realizada de manera exitosa.');
         document.getElementById('inscripcionForm').reset(); // Limpiar el formulario
-        actualizarSemestres(); // Restablecer los semestres al seleccionar programa
-        cargarAsignaturas(); // Recargar asignaturas después de la preinscripción
+        actualizarSemestres(); // Restablecer los semestres
+        cargarAsignaturas(); // Recargar asignaturas
+        grecaptcha.reset(); // Reiniciar reCAPTCHA
       })
       .catch(() => {
         errorMensaje.textContent = 'Error al enviar los datos. Intente de nuevo.';
         errorMensaje.style.display = 'block';
+      })
+      .finally(() => {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Preinscribir';
       });
     });
   </script>
