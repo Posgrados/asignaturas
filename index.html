@@ -58,15 +58,11 @@
       margin-top: 5px;
       display: none;
     }
-    select option {
-      font-family: 'Poppins', sans-serif;
-    }
   </style>
 </head>
 <body>
   <h1>Preinscripción de Asignaturas</h1>
   <form id="inscripcionForm">
-    
     <label for="programa">Programa Académico:</label>
     <select id="programa" name="programa" required onchange="actualizarSemestres()">
       <option value="">Seleccione un programa</option>
@@ -97,24 +93,20 @@
   </form>
 
   <script>
-    // URL de tu Google Apps Script
     const scriptURL = 'https://script.google.com/macros/s/AKfycbx1svtBbeTBjOLpwooI1YIfKftVJ6LKH_74AKiINNRk_aQtmiWgDCxSZBjUYlaUI0m5cw/exec';
 
-    // Función para cargar las asignaturas con los cupos disponibles
     function cargarAsignaturas() {
       fetch(`${scriptURL}?action=getAsignaturas`)
         .then(response => response.json())
         .then(data => {
           const asignaturaSelect = document.getElementById('asignatura');
-          asignaturaSelect.innerHTML = '';  // Limpiar opciones previas
+          asignaturaSelect.innerHTML = '';
 
           data.forEach(item => {
             const option = document.createElement('option');
             option.value = item.nombre;
             option.textContent = `${item.nombre} (Cupos disponibles: ${item.cupos})`;
-            if (item.cupos <= 0) {
-              option.disabled = true;  // Deshabilitar si no hay cupos
-            }
+            if (item.cupos <= 0) option.disabled = true;
             asignaturaSelect.appendChild(option);
           });
         })
@@ -124,17 +116,13 @@
         });
     }
 
-    // Cargar asignaturas al cargar la página
     cargarAsignaturas();
 
-    // Función para actualizar los semestres según el programa seleccionado
     function actualizarSemestres() {
       const programa = document.getElementById('programa').value;
       const semestreSelect = document.getElementById('semestre');
-      
-      semestreSelect.innerHTML = '<option value="">Seleccione un semestre</option>'; // Reiniciar opciones
-
-      let maxSemestres = programa === 'Maestría en Administración' ? 4 : 2; // Maestría tiene 4 semestres, las demás 2
+      semestreSelect.innerHTML = '<option value="">Seleccione un semestre</option>';
+      let maxSemestres = programa === 'Maestría en Administración' ? 4 : 2;
       for (let i = 1; i <= maxSemestres; i++) {
         let option = document.createElement('option');
         option.value = `Semestre ${i}`;
@@ -143,29 +131,41 @@
       }
     }
 
-    // Manejar el envío del formulario
-    document.getElementById('inscripcionForm').addEventListener('submit', function(event) {
+    function verificarInscripcion(documento) {
+      return fetch(`${scriptURL}?action=verificarInscripcion&documento=${documento}`)
+        .then(response => response.json())
+        .then(data => data.yaInscrito);
+    }
+
+    document.getElementById('inscripcionForm').addEventListener('submit', async function(event) {
       event.preventDefault();
       const errorMensaje = document.getElementById('errorMensaje');
       errorMensaje.style.display = 'none';
       
-      const formData = new FormData(this);
-      const params = new URLSearchParams(formData).toString();
+      const documento = document.getElementById('documento').value;
+      const yaInscrito = await verificarInscripcion(documento);
 
+      if (yaInscrito) {
+        errorMensaje.textContent = 'Ya está inscrito en una asignatura.';
+        errorMensaje.style.display = 'block';
+        return;
+      }
+
+      const formData = new FormData(this);
       fetch(`${scriptURL}?action=inscribir`, {
         method: 'POST',
-        body: params,
+        body: new URLSearchParams(formData),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       })
       .then(response => response.text())
-      .then(result => {
-        alert('La preinscripción de su asignatura fue realizada de manera exitosa.');
-        document.getElementById('inscripcionForm').reset(); // Limpiar el formulario
-        actualizarSemestres(); // Restablecer los semestres al seleccionar programa
-        cargarAsignaturas(); // Recargar asignaturas después de la preinscripción
+      .then(() => {
+        alert('Preinscripción exitosa.');
+        document.getElementById('inscripcionForm').reset();
+        actualizarSemestres();
+        cargarAsignaturas();
       })
       .catch(() => {
-        errorMensaje.textContent = 'Error al enviar los datos. Intente de nuevo.';
+        errorMensaje.textContent = 'Error al enviar los datos.';
         errorMensaje.style.display = 'block';
       });
     });
