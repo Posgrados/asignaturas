@@ -4,51 +4,62 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Preinscripción de Asignaturas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Poppins', Arial, sans-serif;
       background-color: #f4f4f9;
       padding: 20px;
     }
     h1 {
       text-align: center;
       color: #2c3e50;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
     }
     form {
       max-width: 600px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 30px;
       background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
     label {
       display: block;
       margin-top: 15px;
-      font-weight: bold;
+      font-weight: 600;
+      color: #34495e;
     }
     input, select, button {
       width: 100%;
-      padding: 10px;
-      margin-top: 5px;
+      padding: 12px;
+      margin-top: 8px;
       border: 1px solid #ccc;
-      border-radius: 4px;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
     }
     button {
       background-color: #3498db;
       color: white;
       border: none;
       cursor: pointer;
-      margin-top: 20px;
+      margin-top: 25px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
     }
     button:hover {
       background-color: #2980b9;
     }
     .error {
-      color: red;
+      color: #e74c3c;
       font-size: 14px;
       margin-top: 5px;
       display: none;
+    }
+    select option {
+      font-family: 'Poppins', sans-serif;
     }
   </style>
 </head>
@@ -59,10 +70,10 @@
     <label for="programa">Programa Académico:</label>
     <select id="programa" name="programa" required onchange="actualizarSemestres()">
       <option value="">Seleccione un programa</option>
-      <option value="Programa 1">Programa 1</option>
-      <option value="Programa 2">Programa 2</option>
-      <option value="Programa 3">Programa 3</option>
-      <option value="Programa 4">Programa 4</option>
+      <option value="Maestría en Administración">Maestría en Administración</option>
+      <option value="Especialización en Alta Gerencia">Especialización en Alta Gerencia</option>
+      <option value="Especialización en Gerencia Estratégica de Proyectos">Especialización en Gerencia Estratégica de Proyectos</option>
+      <option value="Especialización en Finanzas Corporativas">Especialización en Finanzas Corporativas</option>
     </select>
 
     <label for="semestre">Semestre:</label>
@@ -123,7 +134,7 @@
       
       semestreSelect.innerHTML = '<option value="">Seleccione un semestre</option>'; // Reiniciar opciones
 
-      let maxSemestres = programa === 'Programa 1' ? 4 : 2; // Programa 1 tiene 4 semestres, los demás 2
+      let maxSemestres = programa === 'Maestría en Administración' ? 4 : 2; // Maestría tiene 4 semestres, las demás 2
       for (let i = 1; i <= maxSemestres; i++) {
         let option = document.createElement('option');
         option.value = `Semestre ${i}`;
