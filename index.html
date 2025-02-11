@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preinscripción de Asignaturas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 5px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Preinscripción de Asignaturas</h1>
+  <form id="inscripcionForm">
+    
+    <label for="programa">Programa Académico:</label>
+    <select id="programa" name="programa" required onchange="actualizarSemestres()">
+      <option value="">Seleccione un programa</option>
+      <option value="Programa 1">Programa 1</option>
+      <option value="Programa 2">Programa 2</option>
+      <option value="Programa 3">Programa 3</option>
+      <option value="Programa 4">Programa 4</option>
+    </select>
+
+    <label for="semestre">Semestre:</label>
+    <select id="semestre" name="semestre" required>
+      <option value="">Seleccione un semestre</option>
+    </select>
+
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required>
+
+    <label for="documento">Documento de Identidad:</label>
+    <input type="text" id="documento" name="documento" required>
+
+    <label for="asignatura">Seleccione una Asignatura:</label>
+    <select id="asignatura" name="asignatura" required>
+      <option value="">Cargando asignaturas...</option>
+    </select>
+
+    <button type="submit">Preinscribir</button>
+    <p class="error" id="errorMensaje">Error al enviar los datos. Intente de nuevo.</p>
+  </form>
+
+  <script>
+    // URL de tu Google Apps Script
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbx1svtBbeTBjOLpwooI1YIfKftVJ6LKH_74AKiINNRk_aQtmiWgDCxSZBjUYlaUI0m5cw/exec';
+
+    // Función para cargar las asignaturas con los cupos disponibles
+    function cargarAsignaturas() {
+      fetch(`${scriptURL}?action=getAsignaturas`)
+        .then(response => response.json())
+        .then(data => {
+          const asignaturaSelect = document.getElementById('asignatura');
+          asignaturaSelect.innerHTML = '';  // Limpiar opciones previas
+
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.nombre;
+            option.textContent = `${item.nombre} (Cupos disponibles: ${item.cupos})`;
+            if (item.cupos <= 0) {
+              option.disabled = true;  // Deshabilitar si no hay cupos
+            }
+            asignaturaSelect.appendChild(option);
+          });
+        })
+        .catch(error => {
+          console.error('Error al obtener cupos:', error);
+          document.getElementById('asignatura').innerHTML = '<option value="">Error al cargar las asignaturas</option>';
+        });
+    }
+
+    // Cargar asignaturas al cargar la página
+    cargarAsignaturas();
+
+    // Función para actualizar los semestres según el programa seleccionado
+    function actualizarSemestres() {
+      const programa = document.getElementById('programa').value;
+      const semestreSelect = document.getElementById('semestre');
+      
+      semestreSelect.innerHTML = '<option value="">Seleccione un semestre</option>'; // Reiniciar opciones
+
+      let maxSemestres = programa === 'Programa 1' ? 4 : 2; // Programa 1 tiene 4 semestres, los demás 2
+      for (let i = 1; i <= maxSemestres; i++) {
+        let option = document.createElement('option');
+        option.value = `Semestre ${i}`;
+        option.textContent = `Semestre ${i}`;
+        semestreSelect.appendChild(option);
+      }
+    }
+
+    // Manejar el envío del formulario
+    document.getElementById('inscripcionForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const errorMensaje = document.getElementById('errorMensaje');
+      errorMensaje.style.display = 'none';
+      
+      const formData = new FormData(this);
+      const params = new URLSearchParams(formData).toString();
+
+      fetch(`${scriptURL}?action=inscribir`, {
+        method: 'POST',
+        body: params,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
+      .then(response => response.text())
+      .then(result => {
+        alert('La preinscripción de su asignatura fue realizada de manera exitosa.');
+        document.getElementById('inscripcionForm').reset(); // Limpiar el formulario
+        actualizarSemestres(); // Restablecer los semestres al seleccionar programa
+        cargarAsignaturas(); // Recargar asignaturas después de la preinscripción
+      })
+      .catch(() => {
+        errorMensaje.textContent = 'Error al enviar los datos. Intente de nuevo.';
+        errorMensaje.style.display = 'block';
+      });
+    });
+  </script>
+</body>
+</html>
